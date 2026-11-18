@@ -9,14 +9,11 @@ import Config
 
 # ## Using releases
 #
-# If you use `mix release`, you need to explicitly enable the server
-# by passing the PHX_SERVER=true when you start it:
+# In production the release always starts the web server. In other
+# environments, pass PHX_SERVER=true when you start it:
 #
 #     PHX_SERVER=true bin/demo2 start
-#
-# Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
-# script that automatically sets the env var above.
-if System.get_env("PHX_SERVER") do
+if config_env() == :prod or System.get_env("PHX_SERVER") do
   config :demo2, Demo2Web.Endpoint, server: true
 end
 
@@ -26,13 +23,13 @@ if config_env() == :prod do
   # want to use a different value for prod and you most likely don't want
   # to check this value into version control, so we use an environment
   # variable instead.
+  #
+  # Without SECRET_KEY_BASE a random key is generated on every start,
+  # so sessions and signed cookies do not survive a restart.
+  # Generate a permanent one with: mix phx.gen.secret
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
-      "demo_secret_key_base_for_app_example_deploy_phoenix_elixir_L3MBhT8cZrGq" ||
-      raise """
-      environment variable SECRET_KEY_BASE is missing.
-      You can generate one by calling: mix phx.gen.secret
-      """
+      Base.encode64(:crypto.strong_rand_bytes(48))
 
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
